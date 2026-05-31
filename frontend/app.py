@@ -7,11 +7,18 @@ from PIL import Image
 from io import BytesIO
 
 from utils.enhancement import (
+
     histogram_equalization,
+
     clahe_enhancement,
+
     gamma_enhancement,
+
     handcrafted_zero_dce,
-    neural_zero_dce
+
+    neural_zero_dce,
+
+    gainnet_enhancement
 )
 
 
@@ -55,7 +62,9 @@ method = st.selectbox(
 
         "Zero-DCE Handcrafted",
 
-        "Zero-DCE Neural"
+        "Zero-DCE Neural",
+
+        "GainNet"
 
     ]
 )
@@ -100,6 +109,12 @@ if uploaded_file:
             output = handcrafted_zero_dce(
                 image
             )
+
+        elif method == "GainNet":
+
+            output = gainnet_enhancement(
+            image
+        )    
 
         else:
 

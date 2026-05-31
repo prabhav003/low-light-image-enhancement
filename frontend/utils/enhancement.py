@@ -7,6 +7,11 @@ from models.zero_dce import (
     enhance
 )
 
+from models.gainnet import (
+    GainNet,
+    enhance as gain_enhance
+)
+
 
 # ---------------------------------------------------
 # Histogram Equalization
@@ -236,3 +241,82 @@ def neural_zero_dce(
     ).astype(np.uint8)
 
     return out
+
+
+gain_model = GainNet()
+
+gain_model.load_state_dict(
+    torch.load(
+        "weights/gainnet.pth",
+        map_location="cpu"
+    )
+)
+
+gain_model.eval()
+
+def gainnet_enhancement(
+    image
+):
+
+    original_h = image.shape[0]
+    original_w = image.shape[1]
+
+    img = cv2.resize(
+        image,
+        (256,256)
+    )
+
+    img = (
+        img.astype(np.float32)
+        /255.0
+    )
+
+    tensor = torch.tensor(
+        img,
+        dtype=torch.float32
+    )
+
+    tensor = tensor.permute(
+        2,
+        0,
+        1
+    )
+
+    tensor = tensor.unsqueeze(0)
+
+    with torch.no_grad():
+
+        gain = gain_model(
+            tensor
+        )
+
+        enhanced = gain_enhance(
+            tensor,
+            gain
+        )
+
+    enhanced = (
+        enhanced[0]
+        .permute(1,2,0)
+        .numpy()
+    )
+
+    enhanced = np.clip(
+        enhanced,
+        0,
+        1
+    )
+
+    enhanced = cv2.resize(
+        enhanced,
+        (
+            original_w,
+            original_h
+        )
+    )
+
+    enhanced = (
+        enhanced * 255
+    ).astype(np.uint8)
+
+    return enhanced
